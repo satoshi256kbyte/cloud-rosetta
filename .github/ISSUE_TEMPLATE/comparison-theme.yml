@@ -1,0 +1,52 @@
+name: 比較テーマの提案
+description: クラウドサービスの比較テーマを提案する
+title: "[比較テーマ] "
+labels: ["proposed"]
+body:
+  - type: input
+    id: theme-id
+    attributes:
+      label: テーマID
+      description: >
+        英小文字・数字・ハイフンのみ（2-64文字）。
+        例: serverless-compute, cdn-comparison
+      placeholder: "serverless-compute"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: providers
+    attributes:
+      label: 比較対象プロバイダー（2つ以上選択）
+      options:
+        - label: AWS
+        - label: GCP
+        - label: Azure
+        - label: Akamai
+        - label: Cloudflare
+
+  - type: input
+    id: axis-id
+    attributes:
+      label: 比較軸ID
+      description: >
+        英小文字・数字・ハイフンのみ（2-64文字）。
+        例: cold-start-latency, pricing, scalability
+      placeholder: "cold-start-latency"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 提案理由
+      description: なぜこの比較テーマが必要か、想定される利用シーンを記載してください
+      placeholder: "プリセールスでお客様からよく聞かれるため..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: 補足事項（任意）
+      description: 比較時に注目すべきポイントや参考情報があれば記載してください

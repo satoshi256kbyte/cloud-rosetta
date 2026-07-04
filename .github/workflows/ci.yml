@@ -35,3 +35,26 @@ jobs:
 
       - name: CDK synth + cdk-nag check
         run: npx cdk synth --strict
+
+  validate-comparisons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: scripts/validate
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: scripts/validate/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate comparison schemas
+        run: npx tsx validate.ts

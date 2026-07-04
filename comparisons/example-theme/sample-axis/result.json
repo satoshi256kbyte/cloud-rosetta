@@ -1,0 +1,22 @@
+{
+  "themeId": "example-theme",
+  "axisId": "sample-axis",
+  "providers": [
+    {
+      "name": "AWS",
+      "serviceName": "AWS Lambda",
+      "summary": "イベント駆動のサーバーレスコンピューティングサービス",
+      "details": "最大15分のタイムアウト、最大10GBメモリ、複数ランタイム対応",
+      "sources": ["https://docs.aws.amazon.com/lambda/latest/dg/welcome.html"]
+    },
+    {
+      "name": "GCP",
+      "serviceName": "Cloud Functions",
+      "summary": "イベント駆動のサーバーレス関数実行環境",
+      "details": "第2世代で最大60分のタイムアウト、最大32GBメモリ",
+      "sources": ["https://cloud.google.com/functions/docs/concepts/overview"]
+    }
+  ],
+  "comparedAt": "2026-07-04T00:00:00Z",
+  "comparedBy": "satoshi256kbyte"
+}
