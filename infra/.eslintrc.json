@@ -16,5 +16,5 @@
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/no-explicit-any": "warn"
   },
-  "ignorePatterns": ["cdk.out/", "node_modules/", "*.js", "*.d.ts"]
+  "ignorePatterns": ["cdk.out/", "node_modules/", "*.js", "*.d.ts", "vitest.config.ts"]
 }
