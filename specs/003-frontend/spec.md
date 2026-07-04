@@ -146,3 +146,15 @@ Next.js アプリケーションが AWS Amplify Hosting にデプロイされ、
 - CSS フレームワークは軽量なもの（Tailwind CSS）を使用する
 - Next.js のバージョンは 15 系（App Router）を使用する
 - Amplify Hosting の設定は CDK（`@aws-cdk/aws-amplify-alpha` または L1）で管理する
+
+## Clarifications
+
+### Session 2026-07-04
+
+- Q: ナビゲーション構造は？
+  → A: ヘッダー（サイト名 + トップリンク）+ サイドバー（テーマ一覧ナビゲーション）。
+  フッターなし。詳細ページでもサイドバーからテーマ一覧にアクセス可能
+- Q: Amplify から AWS リソースへの接続方法は？
+  → A: 命名規約から推定する。環境変数は `STAGE` のみ渡し、
+  テーブル名 `cloud-rosetta-${stage}-ddb-comparison-metadata`、
+  バケット名 `cloud-rosetta-${stage}-s3-comparison-data` をコード内で構築する
