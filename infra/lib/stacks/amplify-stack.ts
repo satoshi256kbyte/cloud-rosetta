@@ -1,33 +1,42 @@
 import * as cdk from 'aws-cdk-lib';
-import * as amplify from 'aws-cdk-lib/aws-amplify';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 
-export interface AmplifyStackProps extends cdk.StackProps {
+export interface AmplifyRoleStackProps extends cdk.StackProps {
   stage: string;
-  repositoryOwner: string;
-  repositoryName: string;
 }
 
-export class AmplifyStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: AmplifyStackProps) {
+/**
+ * Amplify Hosting の SSR ランタイム用 IAM ロールを管理するスタック。
+ *
+ * Amplify App 自体は GitHub OAuth 連携が必要なため IaC 管轄外とし、
+ * Console または CLI で作成する。このスタックで作成したロールを
+ * `aws amplify update-app --iam-service-role-arn` で App に紐づける。
+ */
+export class AmplifyRoleStack extends cdk.Stack {
+  public readonly role: iam.Role;
+
+  constructor(scope: Construct, id: string, props: AmplifyRoleStackProps) {
     super(scope, id, {
       ...props,
-      stackName: `cloud-rosetta-${props.stage}-stack-amplify`,
+      stackName: `cloud-rosetta-${props.stage}-stack-amplify-role`,
     });
 
-    const { stage, repositoryOwner, repositoryName } = props;
+    const { stage } = props;
 
-    // Amplify SSR 用 IAM ロール（DynamoDB/S3 読み取り権限）
-    const amplifyRole = new iam.Role(this, 'AmplifySSRRole', {
+    this.role = new iam.Role(this, 'AmplifySSRRole', {
       roleName: `cloud-rosetta-${stage}-iam-amplify-ssr`,
       assumedBy: new iam.ServicePrincipal('amplify.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess-Amplify'),
+      ],
     });
 
-    // DynamoDB 読み取り権限（Query on GSI 含む）
-    amplifyRole.addToPolicy(
+    // DynamoDB 読み取り権限（テーブル + GSI）
+    this.role.addToPolicy(
       new iam.PolicyStatement({
+        sid: 'DynamoDBRead',
         actions: ['dynamodb:GetItem', 'dynamodb:Query'],
         resources: [
           `arn:aws:dynamodb:${this.region}:${this.account}:table/cloud-rosetta-${stage}-ddb-comparison-metadata`,
@@ -37,8 +46,9 @@ export class AmplifyStack extends cdk.Stack {
     );
 
     // S3 読み取り権限
-    amplifyRole.addToPolicy(
+    this.role.addToPolicy(
       new iam.PolicyStatement({
+        sid: 'S3Read',
         actions: ['s3:GetObject'],
         resources: [
           `arn:aws:s3:::cloud-rosetta-${stage}-s3-comparison-data/comparisons/*`,
@@ -46,15 +56,30 @@ export class AmplifyStack extends cdk.Stack {
       }),
     );
 
-    // cdk-nag 抑制: S3 プレフィックスワイルドカードは比較結果ディレクトリ配下の読み取りに必要
+    // Output: CLI で Amplify App に紐づける際に使用
+    new cdk.CfnOutput(this, 'AmplifySSRRoleArn', {
+      value: this.role.roleArn,
+      description: 'Amplify SSR 用 IAM ロール ARN。aws amplify update-app --iam-service-role-arn に渡す',
+    });
+
+    // cdk-nag 抑制
     NagSuppressions.addResourceSuppressions(
-      amplifyRole,
+      this.role,
       [
+        {
+          id: 'AwsSolutions-IAM4',
+          reason:
+            'AdministratorAccess-Amplify は Amplify Hosting のビルド・デプロイに必要な AWS マネージドポリシー。' +
+            'Amplify 公式ドキュメントで推奨されている。',
+          appliesTo: [
+            'Policy::arn:<AWS::Partition>:iam::aws:policy/AdministratorAccess-Amplify',
+          ],
+        },
         {
           id: 'AwsSolutions-IAM5',
           reason:
             'S3 comparisons/* は比較結果ディレクトリ配下の全オブジェクト読み取りに必要。' +
-            '特定リソースパス配下に限定されたワイルドカードであり最小権限の原則に準拠。',
+            '特定プレフィックスに限定されたワイルドカードであり最小権限の原則に準拠。',
           appliesTo: [
             'Resource::arn:aws:s3:::cloud-rosetta-dev-s3-comparison-data/comparisons/*',
           ],
@@ -62,57 +87,5 @@ export class AmplifyStack extends cdk.Stack {
       ],
       true,
     );
-
-    // Amplify App
-    const app = new amplify.CfnApp(this, 'AmplifyApp', {
-      name: `cloud-rosetta-${stage}`,
-      repository: `https://github.com/${repositoryOwner}/${repositoryName}`,
-      platform: 'WEB_COMPUTE',
-      iamServiceRole: amplifyRole.roleArn,
-      environmentVariables: [
-        { name: 'STAGE', value: stage },
-        { name: '_CUSTOM_IMAGE', value: 'amplify:al2023' },
-      ],
-      buildSpec: cdk.Fn.sub(`version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd frontend
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: frontend/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - frontend/node_modules/**/*
-      - frontend/.next/cache/**/*
-`),
-    });
-
-    // main ブランチ
-    new amplify.CfnBranch(this, 'MainBranch', {
-      appId: app.attrAppId,
-      branchName: 'main',
-      enableAutoBuild: true,
-      framework: 'Next.js - SSR',
-      stage: 'PRODUCTION',
-      environmentVariables: [{ name: 'STAGE', value: stage }],
-    });
-
-    // Outputs
-    new cdk.CfnOutput(this, 'AmplifyAppId', {
-      value: app.attrAppId,
-      description: 'Amplify App ID',
-    });
-
-    new cdk.CfnOutput(this, 'AmplifyDefaultDomain', {
-      value: app.attrDefaultDomain,
-      description: 'Amplify Default Domain',
-    });
   }
 }

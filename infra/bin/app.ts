@@ -2,7 +2,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { StorageStack } from '../lib/stacks/storage-stack';
-import { AmplifyStack } from '../lib/stacks/amplify-stack';
+import { AmplifyRoleStack } from '../lib/stacks/amplify-stack';
 import { applyTags } from '../lib/utils/tagging';
 
 const app = new cdk.App();
@@ -21,11 +21,9 @@ new StorageStack(app, 'StorageStack', {
   },
 });
 
-// Amplify Hosting Stack
-new AmplifyStack(app, 'AmplifyStack', {
+// Amplify SSR 用 IAM ロール
+new AmplifyRoleStack(app, 'AmplifyRoleStack', {
   stage,
-  repositoryOwner: 'satoshi256kbyte',
-  repositoryName: 'cloud-rosetta',
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: 'ap-northeast-1',
