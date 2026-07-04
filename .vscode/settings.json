@@ -1,0 +1,7 @@
+{
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        { "text": "コミットメッセージは日本語で書いてください。" },
+        { "text": "Conventional Commitsの形式に従って書いてください。" },
+        { "text": "変更したファイルごとに、変更内容を詳しく記述してください。" }
+    ]
+}
