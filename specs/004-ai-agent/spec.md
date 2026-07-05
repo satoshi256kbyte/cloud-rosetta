@@ -147,9 +147,10 @@ CI（スキーマバリデーション）がパスすることを確認する。
   AgentCore のサービス障害の場合は、手動実行ガイドへのリンクを含める
 - **FR-017**: PR のブランチ名は `agent/{themeId}-{axisId}` とし、
   PR タイトルは `feat(comparison): {themeId}/{axisId} の比較結果を追加` とする（MUST）
-- **FR-018**: OIDC IAM ロールに Bedrock AgentCore の InvokeAgent 権限
-  （`bedrock:InvokeAgent`）を追加しなければならない（MUST）。
-  対象は作成したエージェントの ARN に限定する
+- **FR-018**: GitHub Actions 用 OIDC IAM ロールには Bedrock AgentCore の
+  InvokeHarness 権限が付与されていなければならない（MUST）。
+  OIDC ロール自体は IaC 管理外（手動作成・管理）とし、
+  必要な権限設定はリポジトリ管理者が手動で行う
 - **FR-019**: エージェントのシステムプロンプトには、出力形式（JSON Schema）、
   参照すべき情報源の優先順位（公式ドキュメント > ブログ > その他）、
   日本語での出力指示を含めなければならない（MUST）
@@ -190,7 +191,7 @@ CI（スキーマバリデーション）がパスすることを確認する。
 - Amazon Bedrock AgentCore が GA（一般利用可能）であり、
   API 経由でエージェントを呼び出せる状態である
 - GitHub Actions から Bedrock AgentCore へのアクセスは
-  既存の OIDC IAM ロールに Bedrock 関連権限を追加して実現する
+  手動作成の OIDC IAM ロール（IaC 管理外）に必要な権限を付与して実現する
 - AWS Knowledge MCP Server は Bedrock AgentCore のツールとして
   エージェントに組み込む
 - Web 検索機能は Bedrock AgentCore のツール（Web Search tool）として利用する

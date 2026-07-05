@@ -34,8 +34,8 @@
   Bedrock AgentCore エージェント定義（モデル: コンテキスト変数で切り替え可能、
   デフォルト Mistral Large 3）+ IAM ロール + CloudWatch Logs（FR-023）
 - [x] T005 `infra/bin/app.ts` に AgentStack を追加する
-- [x] T006 既存 OIDC IAM ロールに `bedrock:InvokeAgent` 権限を追加する（FR-018）
-  — 既に AdministratorAccess がアタッチ済みのため追加不要
+- [x] T006 OIDC IAM ロールに必要な権限があることを確認する（FR-018）
+  — OIDC ロールは手動管理（AdministratorAccess 付与済みのため追加不要）
 - [x] T007 `cdk synth --strict` で cdk-nag パスを確認する
 - [x] T008 `cdk deploy AgentStack` でエージェントをデプロイする
 

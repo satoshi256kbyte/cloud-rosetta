@@ -148,31 +148,36 @@ permissions:
 
 | リソース | 種類 | 備考 |
 |----------|------|------|
-| Agent | Bedrock AgentCore Agent | 比較実行エージェント |
-| Agent Alias | Bedrock AgentCore Alias | エージェントの公開エイリアス |
-| IAM Role (Agent) | IAM Role | エージェント用実行ロール |
-| IAM Policy (OIDC追加) | IAM Policy | 既存ロールに Bedrock 権限追加 |
+| Harness | Bedrock AgentCore Harness | 比較実行エージェント |
+| IAM Role (Harness) | IAM Role | エージェント用実行ロール |
+| Log Group | CloudWatch Logs | エージェント実行ログ（FR-023） |
 
-### IAM 権限（エージェント実行ロール）
-
-```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "bedrock:InvokeModel"
-  ],
-  "Resource": "arn:aws:bedrock:ap-northeast-1::foundation-model/*"
-}
-```
-
-### IAM 権限（GitHub Actions OIDC ロール追加分）
+### IAM 権限（エージェント実行ロール — CDK 管理）
 
 ```json
 {
   "Effect": "Allow",
   "Action": [
-    "bedrock:InvokeAgent"
+    "bedrock:InvokeModel",
+    "bedrock:InvokeModelWithResponseStream"
   ],
-  "Resource": "arn:aws:bedrock:ap-northeast-1:{account}:agent/{agentId}"
+  "Resource": "arn:aws:bedrock:us-east-1::foundation-model/*"
 }
 ```
+
+### IAM 権限（GitHub Actions OIDC ロール — 手動管理）
+
+OIDC ロールは IaC 管理外。リポジトリ管理者が手動で以下の権限を付与する:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "bedrock-agentcore:InvokeHarness"
+  ],
+  "Resource": "arn:aws:bedrock-agentcore:us-east-1:{account}:harness/{harnessId}"
+}
+```
+
+> 注: 現在は AdministratorAccess がアタッチ済みのため個別設定は不要。
+> 最小権限化する場合は上記ポリシーを設定する。
