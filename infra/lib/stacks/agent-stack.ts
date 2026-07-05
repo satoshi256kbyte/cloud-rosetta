@@ -9,11 +9,10 @@ export interface AgentStackProps extends cdk.StackProps {
 }
 
 /**
- * AIエージェント比較実行基盤スタック。
+ * AIエージェント比較実行基盤スタック（us-east-1）。
  *
- * AgentCore Harness を CDK で管理し、GitHub Actions から
- * InvokeHarness API を直接呼び出す構成。
- * Step Functions の InvokeHarness 統合は東京リージョン未対応のため不使用。
+ * Mistral Large 3 を使用。JSON 構造化出力に強い。
+ * Web検索ツールは後続で追加（現時点はモデルの学習データで回答）。
  */
 export class AgentStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AgentStackProps) {
@@ -38,7 +37,6 @@ export class AgentStack extends cdk.Stack {
       }),
     );
 
-    // AgentCore 内部操作（Memory, Events 等）
     harnessRole.addToPolicy(
       new iam.PolicyStatement({
         sid: 'AgentCoreOperations',
@@ -51,13 +49,13 @@ export class AgentStack extends cdk.Stack {
       }),
     );
 
-    // AgentCore Harness（CfnHarness L1）
+    // AgentCore Harness（Mistral Large 3）
     const harness = new bedrockagentcore.CfnHarness(this, 'ComparisonHarness', {
       harnessName: `cloudRosetta${stage}Agent`,
       executionRoleArn: harnessRole.roleArn,
       model: {
         bedrockModelConfig: {
-          modelId: 'nvidia.nemotron-super-3-120b',
+          modelId: 'mistral.mistral-large-2407-v1:0',
           maxTokens: 4096,
           temperature: 0.3,
           topP: 0.9,
@@ -86,7 +84,7 @@ export class AgentStack extends cdk.Stack {
       maxIterations: 10,
     });
 
-    // Harness ARN を構築
+    // Harness ARN
     const harnessArn = cdk.Arn.format(
       { service: 'bedrock-agentcore', resource: 'harness', resourceName: harness.attrHarnessId },
       this,
@@ -98,7 +96,9 @@ export class AgentStack extends cdk.Stack {
       [
         {
           id: 'AwsSolutions-IAM5',
-          reason: 'InvokeModel は全 foundation-model に対して許可。モデル切り替え対応のため。',
+          reason:
+            'InvokeModel は全 foundation-model に対して許可（モデル切り替え対応）。' +
+            'AgentCore 内部操作はリソース指定不可。',
         },
       ],
       true,
@@ -112,7 +112,7 @@ export class AgentStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'HarnessArn', {
       value: harnessArn,
-      description: 'AgentCore Harness ARN（GitHub Actions で InvokeHarness に使用）',
+      description: 'AgentCore Harness ARN（GitHub Actions の HARNESS_ARN に設定）',
     });
   }
 }
