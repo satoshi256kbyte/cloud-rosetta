@@ -132,6 +132,33 @@ CI（スキーマバリデーション）がパスすることを確認する。
 - **FR-011**: AIエージェントの実行基盤は Amazon Bedrock AgentCore を使用し、
   GitHub Actions から AgentCore API 経由でエージェントを呼び出す構成としなければならない（MUST）。
   エージェントはツール（AWS Knowledge MCP Server、Web検索）を持つ多段階処理として構成する
+- **FR-012**: Issue テンプレートの入力内容（テーマID・軸ID・プロバイダー）のバリデーションを
+  ワークフロー起動直後に実行し、不正な場合はエラーコメントを投稿して終了しなければならない（MUST）
+- **FR-013**: `agent.yml` ワークフローの GitHub Actions パーミッションは
+  `issues: write`、`contents: write`、`pull-requests: write`、`id-token: write`
+  を明示的に設定しなければならない（MUST）
+- **FR-014**: 同一テーマ・軸に対して既に未マージの PR が存在する場合、
+  新規 PR は作成せずエラーとして Issue にコメントしなければならない（MUST）
+- **FR-015**: エージェントが情報を取得できないプロバイダーがある場合、
+  そのプロバイダーの `summary` に「情報取得不可」と記載し、
+  `sources` を空配列とせず取得を試みた URL を含めなければならない（MUST）
+- **FR-016**: エラー発生時の Issue コメントは、エラーの種類（タイムアウト・API エラー・
+  バリデーション失敗等）と失敗した処理段階を明記するフォーマットで投稿しなければならない（MUST）
+- **FR-017**: PR のブランチ名は `agent/{themeId}-{axisId}` とし、
+  PR タイトルは `feat(comparison): {themeId}/{axisId} の比較結果を追加` とする（MUST）
+- **FR-018**: OIDC IAM ロールに Bedrock AgentCore の InvokeAgent 権限
+  （`bedrock:InvokeAgent`）を追加しなければならない（MUST）。
+  対象は作成したエージェントの ARN に限定する
+- **FR-019**: エージェントのシステムプロンプトには、出力形式（JSON Schema）、
+  参照すべき情報源の優先順位（公式ドキュメント > ブログ > その他）、
+  日本語での出力指示を含めなければならない（MUST）
+- **FR-020**: `sources` に含める URL は公式ドキュメント（`docs.aws.amazon.com`、
+  `cloud.google.com/docs`、`learn.microsoft.com` 等の公式ドメイン）を
+  優先しなければならない（MUST）。ブログ・サードパーティは補助的に使用可
+- **FR-021**: 比較対象プロバイダーが 2 社でも 5 社でも同一の JSON 構造で出力し、
+  `providers` 配列の要素数が動的に変わっても Schema 準拠を保証しなければならない（MUST）
+- **FR-022**: AgentCore API のレート制限超過時は、エクスポネンシャルバックオフ
+  （初回 1 秒、最大 30 秒、最大 3 回リトライ）で再試行しなければならない（MUST）
 
 ### Key Entities
 

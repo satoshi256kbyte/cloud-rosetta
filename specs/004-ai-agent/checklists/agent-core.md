@@ -35,7 +35,7 @@
 - [ ] CHK008 - Assumptions に「Claude 等のアクセス権限が設定済み」とあるが、
   実際のモデルは Nemotron と明記されている。前提条件とモデル選定の記述に
   矛盾はないか [Consistency] [Spec §Assumptions vs §FR-004]
-- [ ] CHK009 - タイムアウト 15 分（FR-010）と SC-001 の「PR 作成完了まで 15 分以内」は
+- [x] CHK009 - タイムアウト 15 分（FR-010）と SC-001 の「PR 作成完了まで 15 分以内」は
   整合しているか。エージェント実行以外の処理時間（ラベル変更、PR 作成）を含めると
   SC-001 を満たせない可能性は検討されているか [Consistency] [Spec §FR-010, §SC-001]
 
@@ -46,12 +46,12 @@
 - [ ] CHK011 - エージェントが参照すべき情報が見つからない場合（ナレッジベースに
   該当データなし、Web 検索結果なし）の振る舞いは定義されているか
   [Coverage] [Spec §FR-005, §FR-006]
-- [ ] CHK012 - IAM ロールに必要な Bedrock AgentCore 関連の権限
+- [x] CHK012 - IAM ロールに必要な Bedrock AgentCore 関連の権限
   （bedrock:InvokeAgent 等）の一覧は明示されているか [Coverage] [Spec §Assumptions]
 
 ## Edge Case Coverage
 
-- [ ] CHK013 - AgentCore API のレート制限超過時のリトライ戦略（バックオフ間隔、
+- [x] CHK013 - AgentCore API のレート制限超過時のリトライ戦略（バックオフ間隔、
   最大リトライ回数）は定義されているか [Gap] [Spec §Edge Cases]
 - [ ] CHK014 - エージェント実行中に AgentCore 側で障害が発生した場合（5xx エラー、
   タイムアウト）の検知方法と復旧手順は記載されているか [Gap] [Spec §Edge Cases]
