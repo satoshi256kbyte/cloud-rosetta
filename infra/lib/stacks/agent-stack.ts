@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as bedrockagentcore from 'aws-cdk-lib/aws-bedrockagentcore';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -9,10 +10,11 @@ export interface AgentStackProps extends cdk.StackProps {
 }
 
 /**
- * AIエージェント比較実行基盤スタック（us-east-1）。
+ * AIエージェント比較実行基盤スタック。
  *
- * Mistral Large 3 を使用。JSON 構造化出力に強い。
- * Web検索ツールは後続で追加（現時点はモデルの学習データで回答）。
+ * Bedrock AgentCore の Harness としてエージェントをデプロイする。
+ * モデルは環境変数 AGENT_MODEL_ID で切り替え可能（デフォルト: Mistral Large 3）。
+ * FR-023: CloudWatch Logs を有効化してエージェント実行ログを記録する。
  */
 export class AgentStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AgentStackProps) {
@@ -22,6 +24,17 @@ export class AgentStack extends cdk.Stack {
     });
 
     const { stage } = props;
+
+    // モデルID（環境変数で切り替え可能）
+    const modelId =
+      this.node.tryGetContext('agentModelId') || 'mistral.mistral-large-3-675b-instruct';
+
+    // CloudWatch Logs グループ（FR-023: エージェント実行ログ）
+    const logGroup = new logs.LogGroup(this, 'AgentLogGroup', {
+      logGroupName: `/cloud-rosetta/${stage}/agent`,
+      retention: logs.RetentionDays.ONE_MONTH,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
 
     // Harness 実行ロール
     const harnessRole = new iam.Role(this, 'HarnessRole', {
@@ -49,13 +62,22 @@ export class AgentStack extends cdk.Stack {
       }),
     );
 
-    // AgentCore Harness（Mistral Large 3）
+    // CloudWatch Logs 書き込み権限
+    harnessRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'CloudWatchLogs',
+        actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+        resources: [logGroup.logGroupArn, `${logGroup.logGroupArn}:*`],
+      }),
+    );
+
+    // AgentCore Harness
     const harness = new bedrockagentcore.CfnHarness(this, 'ComparisonHarness', {
       harnessName: `cloudRosetta${stage}Agent`,
       executionRoleArn: harnessRole.roleArn,
       model: {
         bedrockModelConfig: {
-          modelId: 'mistral.mistral-large-3-675b-instruct',
+          modelId,
           maxTokens: 4096,
           temperature: 0.3,
           topP: 0.9,
@@ -113,6 +135,11 @@ export class AgentStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'HarnessArn', {
       value: harnessArn,
       description: 'AgentCore Harness ARN（GitHub Actions の HARNESS_ARN に設定）',
+    });
+
+    new cdk.CfnOutput(this, 'LogGroupName', {
+      value: logGroup.logGroupName,
+      description: 'エージェント実行ログの CloudWatch Logs グループ',
     });
   }
 }

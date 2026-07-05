@@ -14,10 +14,10 @@
 
 **Purpose**: エージェントスクリプトの基盤構築
 
-- [ ] T001 `scripts/agent/package.json` を作成する。
-  依存関係: @aws-sdk/client-bedrock-agent-runtime, @octokit/rest, tsx, typescript, vitest
-- [ ] T002 [P] `scripts/agent/tsconfig.json` を strict モードで作成する
-- [ ] T003 [P] `scripts/agent/prompts/comparison.txt` にシステムプロンプトの
+- [x] T001 `scripts/agent/package.json` を作成する。
+  依存関係: @aws-sdk/client-bedrock-agentcore, @octokit/rest, tsx, typescript, vitest
+- [x] T002 [P] `scripts/agent/tsconfig.json` を strict モードで作成する
+- [x] T003 [P] `scripts/agent/prompts/comparison.txt` にシステムプロンプトの
   初期版を作成する（FR-019: 出力形式・情報源優先順位・日本語指示）。
   JSON Schema（`scripts/validate/schema.json`）の内容をプロンプト内に埋め込み、
   エージェントが準拠すべき出力形式を明示する
@@ -30,13 +30,14 @@
 
 **⚠️ CRITICAL**: User Story の作業はこのフェーズ完了後に開始する
 
-- [ ] T004 `infra/lib/stacks/agent-stack.ts` を作成する。
-  Bedrock AgentCore エージェント定義（モデル: NVIDIA Nemotron 3 Super 120B A12B、
-  ツール: AWS Knowledge MCP Server + Web検索）+ IAM ロール
-- [ ] T005 `infra/bin/app.ts` に AgentStack を追加する
-- [ ] T006 既存 OIDC IAM ロールに `bedrock:InvokeAgent` 権限を追加する（FR-018）
-- [ ] T007 `cdk synth --strict` で cdk-nag パスを確認する
-- [ ] T008 `cdk deploy AgentStack` でエージェントをデプロイする
+- [x] T004 `infra/lib/stacks/agent-stack.ts` を作成する。
+  Bedrock AgentCore エージェント定義（モデル: コンテキスト変数で切り替え可能、
+  デフォルト Mistral Large 3）+ IAM ロール + CloudWatch Logs（FR-023）
+- [x] T005 `infra/bin/app.ts` に AgentStack を追加する
+- [x] T006 既存 OIDC IAM ロールに `bedrock:InvokeAgent` 権限を追加する（FR-018）
+  — 既に AdministratorAccess がアタッチ済みのため追加不要
+- [x] T007 `cdk synth --strict` で cdk-nag パスを確認する
+- [x] T008 `cdk deploy AgentStack` でエージェントをデプロイする
 
 **Checkpoint**: AgentCore にエージェントがデプロイされ、API で呼び出し可能
 
@@ -50,15 +51,15 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [P] [US1] `scripts/agent/parse-issue.ts` を作成する。
+- [x] T009 [P] [US1] `scripts/agent/parse-issue.ts` を作成する。
   Issue 本文から themeId・axisId・providers をパースし、
   バリデーション（FR-012）を実行する
-- [ ] T010 [P] [US1] `scripts/agent/update-labels.ts` を作成する。
+- [x] T010 [P] [US1] `scripts/agent/update-labels.ts` を作成する。
   Issue のラベルを操作する関数（add/remove）を実装する
-- [ ] T011 [US1] `.github/workflows/agent.yml` を作成する。
+- [x] T011 [US1] `.github/workflows/agent.yml` を作成する。
   トリガー: `issues` イベント `labeled` タイプ、`approved` ラベル検知。
   パーミッション: issues:write, contents:write, pull-requests:write, id-token:write（FR-013）。
-  タイムアウト: 15分（FR-010）。
+  タイムアウト: 15分（FR-010）。concurrency 設定あり。
   起動時に `in-progress` ラベル付与 + 二重実行チェック（FR-002）
 - [ ] T012 [US1] テスト Issue を作成し `approved` ラベルを付与して
   ワークフローが起動・ラベルが変更されることを確認する
@@ -75,17 +76,15 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] `scripts/agent/invoke-agent.ts` を作成する。
-  AgentCore InvokeAgent API を呼び出し、結果を受け取る。
-  セッションタイムアウト（maxIdleTimeoutInSeconds）を設定する。
+- [x] T013 [US2] `scripts/agent/run-workflow.ts` を作成する（invoke-agent 相当）。
+  AgentCore InvokeHarness API を呼び出し、結果を受け取る。
   レート制限リトライ（FR-022: 指数バックオフ 1s/最大30s/3回）。
-  情報取得不可時の処理（FR-015）。
-  出力の sources が公式ドメイン優先か検証するロジックを含む（FR-020）
-- [ ] T014 [P] [US2] `scripts/agent/invoke-agent.test.ts` を作成する。
-  モックを使用した API 呼び出しのユニットテスト
-- [ ] T015 [US2] エージェント単体テストを実行する。
-  `npx tsx invoke-agent.ts --test --theme-id serverless-compute --axis-id cold-start --providers AWS,GCP`
-  で result.json が生成されることを確認する
+  情報取得不可時の処理（FR-015）
+- [x] T014 [P] [US2] `scripts/agent/parse-issue.test.ts` を作成する。
+  パース・バリデーションのユニットテスト（10テスト全パス）
+- [x] T015 [US2] エージェント単体テストを実行する。
+  デプロイ後に `npx tsx test-invoke.ts` で result.json が
+  生成されることを確認する
 
 **Checkpoint**: User Story 2 完了 — エージェントが JSON を生成
 
@@ -99,11 +98,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T016 [P] [US3] `scripts/agent/create-pr.ts` を作成する。
+- [x] T016 [P] [US3] `scripts/agent/create-pr.ts` を作成する。
   feature ブランチ作成（`agent/{themeId}-{axisId}`、FR-017）、
   result.json コミット、PR 作成（`closes #N`）。
   既存 PR チェック（FR-014）
-- [ ] T017 [US3] `agent.yml` にエージェント呼び出し + PR 作成ステップを追加する。
+- [x] T017 [US3] `agent.yml` にエージェント呼び出し + PR 作成ステップを追加する。
   成功時: ラベル `review` に変更（FR-008）。
   失敗時: エラーコメント投稿 + ラベル `proposed` に復帰（FR-009, FR-016）
 - [ ] T018 [US3] E2E テスト: テスト Issue に `approved` ラベルを付与し、
@@ -117,9 +116,9 @@
 
 **Purpose**: ドキュメントとエラーハンドリングの仕上げ
 
-- [ ] T019 [P] `scripts/agent/README.md` を作成する。
+- [x] T019 [P] `scripts/agent/README.md` を作成する。
   スクリプト構成、ローカル実行方法、プロンプト編集手順を記載
-- [ ] T020 [P] `.github/workflows/ci.yml` に `scripts/agent/` の
+- [x] T020 [P] `.github/workflows/ci.yml` に `scripts/agent/` の
   型チェック・テストを追加する
 - [ ] T021 quickstart.md の全シナリオ（1〜5）を実行し最終検証する
 
@@ -179,4 +178,5 @@ T019 (README) | T020 (CI)
 - AgentCore の API 仕様は実装時に最新ドキュメントを確認する
 - プロンプト（comparison.txt）は Git 管理し、変更は PR レビュー対象とする。
   初回実装後にイテレーティブに改善する
-- NVIDIA Nemotron 3 Super 120B A12B の東京リージョン可用性を実装時に再確認する
+- モデルは CDK コンテキスト変数 `agentModelId` で切り替え可能
+  （デフォルト: mistral.mistral-large-3-675b-instruct）

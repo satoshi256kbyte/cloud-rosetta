@@ -10,6 +10,10 @@ permissions:
   pull-requests: write
   id-token: write
 
+concurrency:
+  group: agent-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   run-agent:
     if: github.event.label.name == 'approved'
@@ -37,7 +41,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Parse Issue and start agent
+      - name: Run agent workflow
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

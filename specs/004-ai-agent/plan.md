@@ -54,9 +54,13 @@ NVIDIA Nemotron 3 Super 120B A12B のトークン制限
 ```text
 specs/004-ai-agent/
 ├── plan.md
+├── spec.md
 ├── research.md
+├── data-model.md
 ├── quickstart.md
-└── tasks.md
+├── tasks.md
+└── contracts/
+    └── agent-workflow.md
 ```
 
 ### Source Code (repository root)
@@ -89,3 +93,16 @@ CDK で `agent-stack.ts` として管理する。
 ## Complexity Tracking
 
 Constitution Check に違反なし。記入不要。
+
+## Post-Design Constitution Check
+
+| 原則 | 準拠状況 | 設計での対応 |
+|------|----------|-------------|
+| I. 仕様駆動開発 | ✅ | spec → plan → tasks の順序で進行中 |
+| II. 人間レビュー必須 | ✅ | エージェント出力は PR として作成、人間レビュー必須 |
+| III. 一次情報参照 | ✅ | AWS Knowledge MCP Server + Web検索で公式ドキュメント参照 |
+| IV. サーバーレス優先 | ✅ | AgentCore + GitHub Actions で VPC 不要 |
+| V. 品質の自動保証 | ✅ | JSON Schema バリデーション CI、Vitest でスクリプトテスト |
+| VI. コミットメッセージ規約 | ✅ | PR タイトルを `feat(comparison):` 形式に規定 |
+
+ゲート判定: **PASS** — 設計後も全原則に準拠。
