@@ -53,13 +53,16 @@ async function main() {
     console.log('Parsed params:', JSON.stringify(params));
 
     // プロンプト構築
-    const userPrompt = `以下の比較を実行してください。
+    const userPrompt = `以下の比較を実行し、結果をJSONのみで出力してください。説明文やマークダウンは不要です。
 
 テーマID: ${params.themeId}
 比較軸ID: ${params.axisId}
 比較対象プロバイダー: ${params.providers.join(', ')}
 
-JSON形式で結果を出力してください。`;
+出力形式（これ以外のテキストを一切含めないでください）:
+{"themeId":"${params.themeId}","axisId":"${params.axisId}","providers":[{"name":"プロバイダー名","serviceName":"サービス名","summary":"日本語要約","details":"詳細","sources":["公式URL"]}],"comparedAt":"2026-07-05T00:00:00Z","comparedBy":"agent"}
+
+JSONのみ出力してください。`;
 
     // InvokeHarness API 呼び出し（リトライ付き: FR-022）
     let agentResponse = '';
