@@ -98,6 +98,7 @@ JSON形式で結果を出力してください。`;
     }
 
     console.log('Agent response received, parsing JSON...');
+    console.log('Raw response (first 500 chars):', agentResponse.substring(0, 500));
 
     // JSON を抽出（レスポンスにテキストが混ざる場合を考慮）
     const jsonMatch = agentResponse.match(/\{[\s\S]*\}/);
