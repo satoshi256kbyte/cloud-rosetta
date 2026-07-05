@@ -1,7 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as logs from 'aws-cdk-lib/aws-logs';
-import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as bedrockagentcore from 'aws-cdk-lib/aws-bedrockagentcore';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -10,6 +8,13 @@ export interface AgentStackProps extends cdk.StackProps {
   stage: string;
 }
 
+/**
+ * AIエージェント比較実行基盤スタック。
+ *
+ * AgentCore Harness を CDK で管理し、GitHub Actions から
+ * InvokeHarness API を直接呼び出す構成。
+ * Step Functions の InvokeHarness 統合は東京リージョン未対応のため不使用。
+ */
 export class AgentStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AgentStackProps) {
     super(scope, id, {
@@ -74,120 +79,7 @@ export class AgentStack extends cdk.Stack {
       this,
     );
 
-    // Step Functions 実行ロール
-    const sfnRole = new iam.Role(this, 'StepFunctionsRole', {
-      roleName: `cloud-rosetta-${stage}-iam-sfn-agent`,
-      assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
-    });
-
-    sfnRole.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'InvokeHarness',
-        actions: ['bedrock-agentcore:InvokeHarness'],
-        resources: [harnessArn],
-      }),
-    );
-
-    sfnRole.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'ApplyGuardrail',
-        actions: ['bedrock:ApplyGuardrail'],
-        resources: ['*'],
-      }),
-    );
-
-    // ログ
-    const logGroup = new logs.LogGroup(this, 'SfnLogGroup', {
-      logGroupName: `/aws/stepfunctions/cloud-rosetta-${stage}-sfn-comparison-agent`,
-      retention: logs.RetentionDays.TWO_WEEKS,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    sfnRole.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'CloudWatchLogs',
-        actions: [
-          'logs:CreateLogDelivery',
-          'logs:GetLogDelivery',
-          'logs:UpdateLogDelivery',
-          'logs:DeleteLogDelivery',
-          'logs:ListLogDeliveries',
-          'logs:PutResourcePolicy',
-          'logs:DescribeResourcePolicies',
-          'logs:DescribeLogGroups',
-        ],
-        resources: ['*'],
-      }),
-    );
-
-    sfnRole.addToPolicy(
-      new iam.PolicyStatement({
-        sid: 'XRay',
-        actions: [
-          'xray:PutTraceSegments',
-          'xray:PutTelemetryRecords',
-          'xray:GetSamplingRules',
-          'xray:GetSamplingTargets',
-        ],
-        resources: ['*'],
-      }),
-    );
-
-    // Step Functions ステートマシン
-    const definition = {
-      Comment: 'cloud-rosetta 比較エージェント実行ワークフロー',
-      StartAt: 'InvokeComparisonAgent',
-      States: {
-        InvokeComparisonAgent: {
-          Type: 'Task',
-          Resource: 'arn:aws:states:::bedrock-agentcore:invokeHarness',
-          Parameters: {
-            'HarnessIdentifier': harnessArn,
-            'Input': {
-              'Messages': [
-                {
-                  'Role': 'user',
-                  'Content': [{ 'Text.$': '$.prompt' }],
-                },
-              ],
-            },
-          },
-          TimeoutSeconds: 900,
-          ResultPath: '$.agentResult',
-          Next: 'Done',
-          Catch: [{ ErrorEquals: ['States.ALL'], Next: 'Failed', ResultPath: '$.error' }],
-        },
-        Done: { Type: 'Succeed' },
-        Failed: { Type: 'Fail', Cause: 'AgentCore invocation failed', Error: 'AgentInvocationError' },
-      },
-    };
-
-    const stateMachine = new sfn.CfnStateMachine(this, 'ComparisonAgentSfn', {
-      stateMachineName: `cloud-rosetta-${stage}-sfn-comparison-agent`,
-      definitionString: JSON.stringify(definition),
-      roleArn: sfnRole.roleArn,
-      tracingConfiguration: { enabled: true },
-      loggingConfiguration: {
-        destinations: [{ cloudWatchLogsLogGroup: { logGroupArn: logGroup.logGroupArn } }],
-        includeExecutionData: true,
-        level: 'ALL',
-      },
-    });
-
     // cdk-nag 抑制
-    NagSuppressions.addResourceSuppressions(
-      sfnRole,
-      [
-        {
-          id: 'AwsSolutions-IAM5',
-          reason:
-            'bedrock:ApplyGuardrail, CloudWatch Logs, X-Ray はリソース指定不可のワイルドカード権限。' +
-            'AWS 公式パターンに準拠。',
-        },
-      ],
-      true,
-    );
-
     NagSuppressions.addResourceSuppressions(
       harnessRole,
       [
@@ -200,14 +92,14 @@ export class AgentStack extends cdk.Stack {
     );
 
     // Outputs
-    new cdk.CfnOutput(this, 'HarnessArn', {
-      value: harnessArn,
-      description: 'AgentCore Harness ARN',
+    new cdk.CfnOutput(this, 'HarnessId', {
+      value: harness.attrHarnessId,
+      description: 'AgentCore Harness ID',
     });
 
-    new cdk.CfnOutput(this, 'StateMachineArn', {
-      value: stateMachine.attrArn,
-      description: 'Step Functions ステートマシン ARN',
+    new cdk.CfnOutput(this, 'HarnessArn', {
+      value: harnessArn,
+      description: 'AgentCore Harness ARN（GitHub Actions で InvokeHarness に使用）',
     });
   }
 }

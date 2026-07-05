@@ -1,15 +1,15 @@
-import { SFNClient, StartExecutionCommand, DescribeExecutionCommand } from '@aws-sdk/client-sfn';
+import { BedrockAgentCoreClient, InvokeHarnessCommand } from '@aws-sdk/client-bedrock-agentcore';
 import { parseIssueBody } from './parse-issue.js';
 import { addLabel, removeLabel, getLabels, postErrorComment } from './update-labels.js';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const REGION = process.env.AWS_REGION || 'ap-northeast-1';
-const STATE_MACHINE_ARN = process.env.STATE_MACHINE_ARN!;
+const HARNESS_IDENTIFIER = process.env.HARNESS_ARN!;
 const ISSUE_NUMBER = parseInt(process.env.ISSUE_NUMBER!, 10);
 const ISSUE_BODY = process.env.ISSUE_BODY!;
 
-const sfnClient = new SFNClient({ region: REGION });
+const client = new BedrockAgentCoreClient({ region: REGION });
 
 async function main() {
   // 二重実行チェック（FR-002）
@@ -29,56 +29,54 @@ async function main() {
     console.log('Parsed params:', JSON.stringify(params));
 
     // プロンプト構築
-    const systemPrompt = readFileSync(
-      resolve(import.meta.dirname ?? '.', 'prompts/comparison.txt'),
-      'utf-8',
-    );
     const userPrompt = `以下の比較を実行してください。
 
 テーマID: ${params.themeId}
 比較軸ID: ${params.axisId}
 比較対象プロバイダー: ${params.providers.join(', ')}
 
-${systemPrompt}`;
+JSON形式で結果を出力してください。`;
 
-    // Step Functions 起動
-    console.log('Starting Step Functions execution...');
-    const execution = await sfnClient.send(
-      new StartExecutionCommand({
-        stateMachineArn: STATE_MACHINE_ARN,
-        input: JSON.stringify({ prompt: userPrompt }),
-        name: `comparison-${params.themeId}-${params.axisId}-${Date.now()}`,
-      }),
-    );
-
-    const executionArn = execution.executionArn!;
-    console.log(`Execution started: ${executionArn}`);
-
-    // 完了待ち（ポーリング）
-    let status = 'RUNNING';
-    while (status === 'RUNNING') {
-      await new Promise((r) => setTimeout(r, 10000)); // 10秒間隔
-      const desc = await sfnClient.send(
-        new DescribeExecutionCommand({ executionArn }),
-      );
-      status = desc.status!;
-      console.log(`Status: ${status}`);
+    // InvokeHarness API 呼び出し（リトライ付き: FR-022）
+    let response;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`InvokeHarness attempt ${attempt}...`);
+        response = await client.send(
+          new InvokeHarnessCommand({
+            harnessIdentifier: HARNESS_IDENTIFIER,
+            input: {
+              messages: [
+                {
+                  role: 'user',
+                  content: [{ text: userPrompt }],
+                },
+              ],
+            },
+          }),
+        );
+        break;
+      } catch (err) {
+        if (attempt === 3) throw err;
+        const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
+        console.log(`Retrying in ${backoff}ms...`);
+        await new Promise((r) => setTimeout(r, backoff));
+      }
     }
 
-    if (status !== 'SUCCEEDED') {
-      throw new Error(`Step Functions execution failed with status: ${status}`);
+    if (!response) {
+      throw new Error('InvokeHarness returned no response');
     }
 
-    // 結果取得
-    const desc = await sfnClient.send(
-      new DescribeExecutionCommand({ executionArn }),
-    );
-    const output = JSON.parse(desc.output!);
-    const agentResponse = output.agentResult?.Output?.Message?.Content?.[0]?.Text;
+    // レスポンスからテキストを抽出
+    const outputMessage = response.output?.message;
+    const agentResponse = outputMessage?.content?.[0]?.text;
 
     if (!agentResponse) {
       throw new Error('AgentCore returned empty response');
     }
+
+    console.log('Agent response received, parsing JSON...');
 
     // JSON パース
     const resultJson = JSON.parse(agentResponse);

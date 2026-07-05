@@ -42,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_BODY: ${{ github.event.issue.body }}
-          STATE_MACHINE_ARN: ${{ vars.STATE_MACHINE_ARN }}
+          HARNESS_ARN: ${{ vars.HARNESS_ARN }}
           STAGE: dev
         run: npx tsx run-workflow.ts
 
