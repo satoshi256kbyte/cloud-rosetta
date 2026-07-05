@@ -18,7 +18,9 @@
   依存関係: @aws-sdk/client-bedrock-agent-runtime, @octokit/rest, tsx, typescript, vitest
 - [ ] T002 [P] `scripts/agent/tsconfig.json` を strict モードで作成する
 - [ ] T003 [P] `scripts/agent/prompts/comparison.txt` にシステムプロンプトの
-  初期版を作成する（FR-019: 出力形式・情報源優先順位・日本語指示）
+  初期版を作成する（FR-019: 出力形式・情報源優先順位・日本語指示）。
+  JSON Schema（`scripts/validate/schema.json`）の内容をプロンプト内に埋め込み、
+  エージェントが準拠すべき出力形式を明示する
 
 ---
 
@@ -75,8 +77,10 @@
 
 - [ ] T013 [US2] `scripts/agent/invoke-agent.ts` を作成する。
   AgentCore InvokeAgent API を呼び出し、結果を受け取る。
+  セッションタイムアウト（maxIdleTimeoutInSeconds）を設定する。
   レート制限リトライ（FR-022: 指数バックオフ 1s/最大30s/3回）。
-  情報取得不可時の処理（FR-015）
+  情報取得不可時の処理（FR-015）。
+  出力の sources が公式ドメイン優先か検証するロジックを含む（FR-020）
 - [ ] T014 [P] [US2] `scripts/agent/invoke-agent.test.ts` を作成する。
   モックを使用した API 呼び出しのユニットテスト
 - [ ] T015 [US2] エージェント単体テストを実行する。
@@ -173,5 +177,6 @@ T019 (README) | T020 (CI)
 - [P] tasks = different files, no dependencies
 - [US#] label maps task to specific user story for traceability
 - AgentCore の API 仕様は実装時に最新ドキュメントを確認する
-- プロンプト（comparison.txt）は初回実装後にイテレーティブに改善する
+- プロンプト（comparison.txt）は Git 管理し、変更は PR レビュー対象とする。
+  初回実装後にイテレーティブに改善する
 - NVIDIA Nemotron 3 Super 120B A12B の東京リージョン可用性を実装時に再確認する
