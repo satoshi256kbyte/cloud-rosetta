@@ -23,6 +23,7 @@ export interface ComparisonMetadata {
   status: string;
   version: number;
   title?: string;
+  axisTitle?: string;
   description?: string;
   updatedAt: string;
   createdAt?: string;
