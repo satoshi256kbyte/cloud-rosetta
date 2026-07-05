@@ -38,13 +38,26 @@ export class AgentStack extends cdk.Stack {
       }),
     );
 
+    // AgentCore 内部操作（Memory, Events 等）
+    harnessRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'AgentCoreOperations',
+        actions: [
+          'bedrock-agentcore:ListEvents',
+          'bedrock-agentcore:CreateEvent',
+          'bedrock-agentcore:*Memory*',
+        ],
+        resources: ['*'],
+      }),
+    );
+
     // AgentCore Harness（CfnHarness L1）
     const harness = new bedrockagentcore.CfnHarness(this, 'ComparisonHarness', {
       harnessName: `cloudRosetta${stage}Agent`,
       executionRoleArn: harnessRole.roleArn,
       model: {
         bedrockModelConfig: {
-          modelId: 'nvidia.nemotron-super-3-120b',
+          modelId: 'amazon.nova-lite-v1:0',
           maxTokens: 4096,
           temperature: 0.3,
           topP: 0.9,
