@@ -61,7 +61,7 @@
   パーミッション: issues:write, contents:write, pull-requests:write, id-token:write（FR-013）。
   タイムアウト: 15分（FR-010）。concurrency 設定あり。
   起動時に `in-progress` ラベル付与 + 二重実行チェック（FR-002）
-- [ ] T012 [US1] テスト Issue を作成し `approved` ラベルを付与して
+- [x] T012 [US1] テスト Issue を作成し `approved` ラベルを付与して
   ワークフローが起動・ラベルが変更されることを確認する
 
 **Checkpoint**: User Story 1 完了 — ラベルトリガーが動作
@@ -105,7 +105,7 @@
 - [x] T017 [US3] `agent.yml` にエージェント呼び出し + PR 作成ステップを追加する。
   成功時: ラベル `review` に変更（FR-008）。
   失敗時: エラーコメント投稿 + ラベル `proposed` に復帰（FR-009, FR-016）
-- [ ] T018 [US3] E2E テスト: テスト Issue に `approved` ラベルを付与し、
+- [x] T018 [US3] E2E テスト: テスト Issue に `approved` ラベルを付与し、
   ワークフロー完了後に PR が作成され CI がパスすることを確認する
 
 **Checkpoint**: User Story 3 完了 — 全フロー（ラベル → エージェント → PR）が動作
@@ -120,7 +120,7 @@
   スクリプト構成、ローカル実行方法、プロンプト編集手順を記載
 - [x] T020 [P] `.github/workflows/ci.yml` に `scripts/agent/` の
   型チェック・テストを追加する
-- [ ] T021 quickstart.md の全シナリオ（1〜5）を実行し最終検証する
+- [x] T021 quickstart.md の全シナリオ（1〜5）を実行し最終検証する
 
 ---
 
