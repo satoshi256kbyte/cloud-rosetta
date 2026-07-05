@@ -1,15 +1,37 @@
-import { BedrockAgentCoreClient, InvokeHarnessCommand } from '@aws-sdk/client-bedrock-agentcore';
+import {
+  BedrockAgentCoreClient,
+  InvokeHarnessCommand,
+} from '@aws-sdk/client-bedrock-agentcore';
+import { randomUUID } from 'node:crypto';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { parseIssueBody } from './parse-issue.js';
 import { addLabel, removeLabel, getLabels, postErrorComment } from './update-labels.js';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 const REGION = process.env.AWS_REGION || 'ap-northeast-1';
-const HARNESS_IDENTIFIER = process.env.HARNESS_ARN!;
+const HARNESS_ARN = process.env.HARNESS_ARN!;
 const ISSUE_NUMBER = parseInt(process.env.ISSUE_NUMBER!, 10);
 const ISSUE_BODY = process.env.ISSUE_BODY!;
 
 const client = new BedrockAgentCoreClient({ region: REGION });
+
+/**
+ * ストリーミングレスポンスからテキストを収集する
+ */
+async function collectStreamText(
+  stream: AsyncIterable<import('@aws-sdk/client-bedrock-agentcore').InvokeHarnessStreamOutput>,
+): Promise<string> {
+  let text = '';
+  for await (const event of stream) {
+    if ('contentBlockDelta' in event && event.contentBlockDelta) {
+      const delta = event.contentBlockDelta.delta;
+      if (delta && 'text' in delta && delta.text) {
+        text += delta.text;
+      }
+    }
+  }
+  return text;
+}
 
 async function main() {
   // 二重実行チェック（FR-002）
@@ -38,23 +60,28 @@ async function main() {
 JSON形式で結果を出力してください。`;
 
     // InvokeHarness API 呼び出し（リトライ付き: FR-022）
-    let response;
+    let agentResponse = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`InvokeHarness attempt ${attempt}...`);
-        response = await client.send(
+        const response = await client.send(
           new InvokeHarnessCommand({
-            harnessIdentifier: HARNESS_IDENTIFIER,
-            input: {
-              messages: [
-                {
-                  role: 'user',
-                  content: [{ text: userPrompt }],
-                },
-              ],
-            },
+            harnessArn: HARNESS_ARN,
+            runtimeSessionId: randomUUID(),
+            messages: [
+              {
+                role: 'user',
+                content: [{ text: userPrompt }],
+              },
+            ],
           }),
         );
+
+        if (!response.stream) {
+          throw new Error('InvokeHarness returned no stream');
+        }
+
+        agentResponse = await collectStreamText(response.stream);
         break;
       } catch (err) {
         if (attempt === 3) throw err;
@@ -64,22 +91,18 @@ JSON形式で結果を出力してください。`;
       }
     }
 
-    if (!response) {
-      throw new Error('InvokeHarness returned no response');
-    }
-
-    // レスポンスからテキストを抽出
-    const outputMessage = response.output?.message;
-    const agentResponse = outputMessage?.content?.[0]?.text;
-
     if (!agentResponse) {
       throw new Error('AgentCore returned empty response');
     }
 
     console.log('Agent response received, parsing JSON...');
 
-    // JSON パース
-    const resultJson = JSON.parse(agentResponse);
+    // JSON を抽出（レスポンスにテキストが混ざる場合を考慮）
+    const jsonMatch = agentResponse.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Agent response does not contain valid JSON');
+    }
+    const resultJson = JSON.parse(jsonMatch[0]);
 
     // 結果をファイルに書き込み（create-pr.ts で使用）
     const comparisonsDir = resolve(
