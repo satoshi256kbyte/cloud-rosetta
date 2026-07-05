@@ -1,23 +1,10 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { AWS_CONFIG } from './aws-config';
+import type { ComparisonResult } from './types';
+
+export type { ComparisonResult, Provider } from './types';
 
 const client = new S3Client({ region: AWS_CONFIG.region });
-
-export interface Provider {
-  name: string;
-  serviceName: string;
-  summary: string;
-  details?: string;
-  sources: string[];
-}
-
-export interface ComparisonResult {
-  themeId: string;
-  axisId: string;
-  providers: Provider[];
-  comparedAt: string;
-  comparedBy: string;
-}
 
 /**
  * S3 から比較結果 JSON を取得する
