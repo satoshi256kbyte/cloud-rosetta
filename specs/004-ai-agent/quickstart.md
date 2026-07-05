@@ -7,7 +7,7 @@
 - 001-foundation-infra がデプロイ済み
 - 002-content-management が動作済み（Issue テンプレート、スキーマバリデーション）
 - Bedrock で NVIDIA Nemotron 3 Super 120B A12B へのアクセスが有効化済み
-- GitHub Actions の OIDC IAM ロールに Bedrock AgentCore の権限が追加済み
+- GitHub Actions の OIDC IAM ロール（手動管理）に Bedrock AgentCore の権限が付与済み
 
 ## Validation Scenarios
 
