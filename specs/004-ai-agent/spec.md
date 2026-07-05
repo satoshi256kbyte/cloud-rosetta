@@ -114,8 +114,10 @@ CI（スキーマバリデーション）がパスすることを確認する。
   二重実行を防止しなければならない（MUST）
 - **FR-003**: Issue 本文からテーマID・軸ID・比較対象プロバイダーを
   パースし、エージェントへのインプットとしなければならない（MUST）
-- **FR-004**: AIエージェントは Amazon Bedrock を使用し、
-  比較結果を JSON Schema 準拠の形式で生成しなければならない（MUST）
+- **FR-004**: AIエージェントは Amazon Bedrock AgentCore 上で動作し、
+  モデルは NVIDIA Nemotron 3 Super 120B A12B を使用して
+  比較結果を JSON Schema 準拠の形式で生成しなければならない（MUST）。
+  モデルは環境変数で切り替え可能とする
 - **FR-005**: AWS サービスの比較では AWS Knowledge MCP Server を活用し、
   一次情報に基づく比較を行わなければならない（MUST）
 - **FR-006**: AWS 以外のサービスでは Web 検索で各社公式ドキュメントを参照し、
@@ -128,7 +130,8 @@ CI（スキーマバリデーション）がパスすることを確認する。
 - **FR-010**: エージェント実行のタイムアウトは 15 分とし、
   超過した場合はエラーとして処理しなければならない（MUST）
 - **FR-011**: AIエージェントの実行基盤は Amazon Bedrock AgentCore を使用し、
-  GitHub Actions から API 経由で呼び出す構成としなければならない（MUST）
+  GitHub Actions から AgentCore API 経由でエージェントを呼び出す構成としなければならない（MUST）。
+  エージェントはツール（AWS Knowledge MCP Server、Web検索）を持つ多段階処理として構成する
 
 ### Key Entities
 
@@ -162,3 +165,16 @@ CI（スキーマバリデーション）がパスすることを確認する。
 - Web 検索機能は Bedrock AgentCore のツール（Web Search tool）として利用する
 - エージェントのプロンプト設計・チューニングは本フェーズのスコープに含む。
   ただし、精度改善の継続的な取り組みは後続フェーズとする
+
+## Clarifications
+
+### Session 2026-07-05
+
+- Q: 使用する Bedrock モデルは？
+  → A: NVIDIA Nemotron 3 Super 120B A12B（MoE、$0.18/$0.78 per 1M tokens）。
+  コスパ重視・地政学リスクなし（米国製）。環境変数で切り替え可能にする。
+  品質不足時は Nova Pro 等にフォールバック可能
+- Q: GitHub Actions からエージェントの呼び出し方式は？
+  → A: Bedrock AgentCore にエージェントをデプロイし、API で呼び出す。
+  多段階処理（情報収集 → 整理 → 構造化出力）になるため、
+  AgentCore のツール構成（MCP Server + Web検索）を活用する
