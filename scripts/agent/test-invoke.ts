@@ -4,7 +4,7 @@ import {
 } from '@aws-sdk/client-bedrock-agentcore';
 import { randomUUID } from 'node:crypto';
 
-const client = new BedrockAgentCoreClient({ region: 'ap-northeast-1' });
+const client = new BedrockAgentCoreClient({ region: 'us-east-1' });
 
 console.log('Sending InvokeHarness...');
 console.time('InvokeHarness');
@@ -12,7 +12,7 @@ console.time('InvokeHarness');
 try {
   const response = await client.send(
     new InvokeHarnessCommand({
-      harnessArn: 'arn:aws:bedrock-agentcore:ap-northeast-1:202633084296:harness/cloudRosettadevAgent-2znPZq1xZY',
+      harnessArn: 'arn:aws:bedrock-agentcore:us-east-1:202633084296:harness/cloudRosettadevAgent-9g4g7TWWeP',
       runtimeSessionId: randomUUID(),
       messages: [
         {
