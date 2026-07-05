@@ -13,7 +13,9 @@ const HARNESS_ARN = process.env.HARNESS_ARN!;
 const ISSUE_NUMBER = parseInt(process.env.ISSUE_NUMBER!, 10);
 const ISSUE_BODY = process.env.ISSUE_BODY!;
 
-const client = new BedrockAgentCoreClient({ region: REGION });
+// Harness ARN からリージョンを抽出（クロスリージョン対応）
+const harnessRegion = HARNESS_ARN.split(':')[3] || REGION;
+const client = new BedrockAgentCoreClient({ region: harnessRegion });
 
 /**
  * ストリーミングレスポンスからテキストを収集する

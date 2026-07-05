@@ -31,12 +31,12 @@ new AmplifyRoleStack(app, 'AmplifyRoleStack', {
   },
 });
 
-// AI エージェント実行基盤（Step Functions + AgentCore）
+// AI エージェント実行基盤（AgentCore Harness: us-east-1）
 new AgentStack(app, 'AgentStack', {
   stage,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: 'ap-northeast-1',
+    region: 'us-east-1',
   },
 });
 

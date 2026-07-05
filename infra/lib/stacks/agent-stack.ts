@@ -57,7 +57,7 @@ export class AgentStack extends cdk.Stack {
       executionRoleArn: harnessRole.roleArn,
       model: {
         bedrockModelConfig: {
-          modelId: 'amazon.nova-lite-v1:0',
+          modelId: 'nvidia.nemotron-super-3-120b',
           maxTokens: 4096,
           temperature: 0.3,
           topP: 0.9,
