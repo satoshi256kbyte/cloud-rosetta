@@ -1,0 +1,26 @@
+{
+  "themeId": "serverless-compute",
+  "axisId": "cold-start",
+  "providers": [
+    {
+      "name": "AWS",
+      "serviceName": "AWS Lambda",
+      "summary": "AWS Lambdaはコールドスタート時間を最小限に抑えるための最適化機能を提供します。コールドスタートは、関数が初めて実行されるときに発生し、その後の関数呼び出しでは発生しません。",
+      "details": "コールドスタート時間は、関数の初回実行時に発生します。AWSは、関数のメモリサイズを調整することで、コールドスタート時間を短縮できます。また、AWS Lambda Provisioned Concurrency機能を使用することで、コールドスタートを完全に回避できます。",
+      "sources": [
+        "https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/getting-started.html"
+      ]
+    },
+    {
+      "name": "GCP",
+      "serviceName": "Google Cloud Functions",
+      "summary": "GCP Cloud Functionsは、コールドスタート時間を短縮するための最適化機能を提供します。コールドスタートは、関数が初めて実行されるときに発生し、その後の関数呼び出しでは発生しません。",
+      "details": "コールドスタート時間は、関数の初回実行時に発生します。GCPは、関数のメモリサイズを調整することで、コールドスタート時間を短縮できます。また、GCP Cloud Functionsでは、コールドスタートを回避するための機能が提供されています。",
+      "sources": [
+        "https://cloud.google.com/functions/docs/concepts/cold-start"
+      ]
+    }
+  ],
+  "comparedAt": "2023-04-01T00:00:00Z",
+  "comparedBy": "agent"
+}
