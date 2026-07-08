@@ -1,0 +1,33 @@
+{
+  "themeId": "serverless-compute",
+  "axisId": "cold-start",
+  "providers": [
+    {
+      "name": "AWS",
+      "serviceName": "AWS Lambda",
+      "summary": "AWS Lambdaのコールドスタートは初回起動時のレイテンシが発生し、100msから1秒以上かかる場合がある。",
+      "details": "AWS Lambdaでは、関数の初回実行時に実行環境の初期化（コールドスタート）が発生し、レイテンシが増加します。コールドスタートは開発・テスト環境で多く発生し、プロビジョンドコンcurrencyを使用することで軽減可能。静的初期化の最適化や依存関係の軽量化も有効。",
+      "sources": [
+        "https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html#cold-start-latency"
+      ]
+    },
+    {
+      "name": "GCP",
+      "serviceName": "Cloud Functions",
+      "summary": "情報取得不可。Cloud Runのコールドスタートに関する情報を参照。",
+      "details": "Cloud Functionsに関するコールドスタートの詳細情報は公式ドキュメントから取得できませんでした。",
+      "sources": []
+    },
+    {
+      "name": "GCP",
+      "serviceName": "Cloud Run",
+      "summary": "Cloud Runのコールドスタートはインスタンスが利用不可の場合やスケールアップ時に発生し、レイテンシが増加する。",
+      "details": "Cloud Runでは、インスタンスが利用不可の場合やトラフィック増加によるスケールアップ時にコールドスタートが発生します。最小インスタンス数の設定やコンテナイメージの軽量化、依存関係の遅延読み込みなどで軽減可能。",
+      "sources": [
+        "https://cloud.google.com/run/docs/troubleshooting#cold-starts"
+      ]
+    }
+  ],
+  "comparedAt": "2026-07-05T00:00:00Z",
+  "comparedBy": "agent"
+}
