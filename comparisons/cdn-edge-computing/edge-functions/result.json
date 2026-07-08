@@ -1,0 +1,28 @@
+{
+  "themeId": "cdn-edge-computing",
+  "axisId": "edge-functions",
+  "providers": [
+    {
+      "name": "AWS",
+      "serviceName": "AWS Lambda@Edge",
+      "summary": "CloudFrontのエッジロケーションでNode.jsまたはPythonの関数を実行し、リクエスト/レスポンスをカスタマイズ可能",
+      "details": "AWS Lambda@Edgeは、Amazon CloudFrontのエッジロケーションで関数を実行するサービス。ユーザーのリクエストやオリジンからのレスポンスをトリガーとして、Node.jsまたはPythonで記述された関数を実行できる。低レイテンシでの処理が可能だが、実行時間やメモリに制限がある。",
+      "sources": [
+        "https://aws.amazon.com/jp/lambda/edge/",
+        "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html"
+      ]
+    },
+    {
+      "name": "Cloudflare",
+      "serviceName": "Cloudflare Workers",
+      "summary": "エッジロケーションでJavaScript/Wasmを実行し、グローバルな低レイテンシ処理を提供するサーバーレスプラットフォーム",
+      "details": "Cloudflare Workersは、Cloudflareのエッジネットワーク上でJavaScriptやWebAssembly（Wasm）を実行するサーバーレスプラットフォーム。リクエストに対して即座に応答可能で、グローバルな低レイテンシを実現。Service Workers APIに基づいており、柔軟なルーティングやカスタムロジックの実装が可能。",
+      "sources": [
+        "https://developers.cloudflare.com/workers/",
+        "https://developers.cloudflare.com/workers/platform/limits/"
+      ]
+    }
+  ],
+  "comparedAt": "2026-07-05T00:00:00Z",
+  "comparedBy": "agent"
+}
