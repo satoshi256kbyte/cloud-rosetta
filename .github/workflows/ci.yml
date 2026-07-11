@@ -36,6 +36,11 @@ jobs:
       - name: CDK synth + cdk-nag check
         run: npx cdk synth --strict
 
+      - name: CloudFormation template validation (cfn-lint)
+        run: |
+          pip install cfn-lint
+          cfn-lint cdk.out/*.template.json --non-zero-exit-code error
+
   validate-comparisons:
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -133,6 +138,8 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
+        env:
+          USE_MOCK_DATA: 'true'
 
       - name: Upload test report
         if: always()

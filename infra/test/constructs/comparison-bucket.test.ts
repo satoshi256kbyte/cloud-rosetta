@@ -56,13 +56,29 @@ describe('ComparisonBucket', () => {
 
   it('命名規約に従っていること（FR-006）', () => {
     template.hasResourceProperties('AWS::S3::Bucket', {
-      BucketName: 'cloud-rosetta-dev-s3-comparison-data',
+      BucketName: Match.objectLike({
+        'Fn::Join': Match.arrayWith([
+          Match.arrayWith([
+            'cloud-rosetta-dev-',
+            { Ref: 'AWS::AccountId' },
+            '-s3-comparison-data',
+          ]),
+        ]),
+      }),
     });
   });
 
   it('ログバケットも作成されること', () => {
     template.hasResourceProperties('AWS::S3::Bucket', {
-      BucketName: 'cloud-rosetta-dev-s3-comparison-logs',
+      BucketName: Match.objectLike({
+        'Fn::Join': Match.arrayWith([
+          Match.arrayWith([
+            'cloud-rosetta-dev-',
+            { Ref: 'AWS::AccountId' },
+            '-s3-comparison-logs',
+          ]),
+        ]),
+      }),
     });
   });
 });

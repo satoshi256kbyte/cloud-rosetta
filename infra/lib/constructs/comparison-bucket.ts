@@ -19,7 +19,7 @@ export class ComparisonBucket extends Construct {
 
     // アクセスログ用バケット（FR-015）
     this.logBucket = new s3.Bucket(this, 'LogBucket', {
-      bucketName: `cloud-rosetta-${stage}-s3-comparison-logs`,
+      bucketName: `cloud-rosetta-${stage}-${cdk.Aws.ACCOUNT_ID}-s3-comparison-logs`,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
@@ -30,7 +30,7 @@ export class ComparisonBucket extends Construct {
 
     // 比較結果データバケット
     this.bucket = new s3.Bucket(this, 'DataBucket', {
-      bucketName: `cloud-rosetta-${stage}-s3-comparison-data`,
+      bucketName: `cloud-rosetta-${stage}-${cdk.Aws.ACCOUNT_ID}-s3-comparison-data`,
       // FR-004: SSE-S3 暗号化
       encryption: s3.BucketEncryption.S3_MANAGED,
       // FR-012: Block Public Access 4項目すべて有効

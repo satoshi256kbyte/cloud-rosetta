@@ -2,10 +2,15 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
 import { AWS_CONFIG } from './aws-config';
 import type { ComparisonMetadata, ThemeCardData, PaginatedThemes } from './types';
+import { MOCK_THEMES } from './mock-data';
 
-const client = DynamoDBDocumentClient.from(
-  new DynamoDBClient({ region: AWS_CONFIG.region }),
-);
+const USE_MOCK = process.env.USE_MOCK_DATA === 'true';
+
+const client = USE_MOCK
+  ? null
+  : DynamoDBDocumentClient.from(
+      new DynamoDBClient({ region: AWS_CONFIG.region }),
+    );
 
 const ITEMS_PER_PAGE = 12;
 
@@ -13,7 +18,11 @@ const ITEMS_PER_PAGE = 12;
  * 公開済み（published）のテーマ一覧を更新日時の降順で取得する
  */
 export async function getPublishedThemes(): Promise<ComparisonMetadata[]> {
-  const result = await client.send(
+  if (USE_MOCK) {
+    return MOCK_THEMES.filter((t) => t.status === 'published');
+  }
+
+  const result = await client!.send(
     new QueryCommand({
       TableName: AWS_CONFIG.tableName,
       IndexName: AWS_CONFIG.gsiByStatus,
@@ -86,7 +95,11 @@ export async function getPublishedThemesPaginated(page: number = 1): Promise<Pag
  * 特定テーマに属する公開済み比較軸の一覧を取得する
  */
 export async function getAxesByTheme(themeId: string): Promise<ComparisonMetadata[]> {
-  const result = await client.send(
+  if (USE_MOCK) {
+    return MOCK_THEMES.filter((t) => t.themeId === themeId && t.status === 'published');
+  }
+
+  const result = await client!.send(
     new QueryCommand({
       TableName: AWS_CONFIG.tableName,
       KeyConditionExpression: '#pk = :themeId',
@@ -107,7 +120,11 @@ export async function getComparisonMetadata(
   themeId: string,
   axisId: string,
 ): Promise<ComparisonMetadata | null> {
-  const result = await client.send(
+  if (USE_MOCK) {
+    return MOCK_THEMES.find((t) => t.themeId === themeId && t.axisId === axisId) ?? null;
+  }
+
+  const result = await client!.send(
     new GetCommand({
       TableName: AWS_CONFIG.tableName,
       Key: { themeId, axisId },

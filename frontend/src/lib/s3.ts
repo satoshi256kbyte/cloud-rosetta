@@ -1,10 +1,13 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { AWS_CONFIG } from './aws-config';
 import type { ComparisonResult } from './types';
+import { MOCK_COMPARISON_RESULTS } from './mock-data';
 
 export type { ComparisonResult, Provider } from './types';
 
-const client = new S3Client({ region: AWS_CONFIG.region });
+const USE_MOCK = process.env.USE_MOCK_DATA === 'true';
+
+const client = USE_MOCK ? null : new S3Client({ region: AWS_CONFIG.region });
 
 /**
  * S3 から比較結果 JSON を取得する
@@ -14,10 +17,14 @@ export async function getComparisonResult(
   axisId: string,
   version: number,
 ): Promise<ComparisonResult | null> {
+  if (USE_MOCK) {
+    return MOCK_COMPARISON_RESULTS[`${themeId}/${axisId}`] ?? null;
+  }
+
   const key = `comparisons/${themeId}/${axisId}/v${version}/result.json`;
 
   try {
-    const result = await client.send(
+    const result = await client!.send(
       new GetObjectCommand({
         Bucket: AWS_CONFIG.bucketName,
         Key: key,
