@@ -39,7 +39,7 @@ jobs:
       - name: CloudFormation template validation (cfn-lint)
         run: |
           pip install cfn-lint
-          cfn-lint cdk.out/*.template.json
+          cfn-lint cdk.out/*.template.json --non-zero-exit-code error
 
   validate-comparisons:
     runs-on: ubuntu-latest
