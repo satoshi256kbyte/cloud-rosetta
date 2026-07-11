@@ -36,6 +36,11 @@ jobs:
       - name: CDK synth + cdk-nag check
         run: npx cdk synth --strict
 
+      - name: CloudFormation template validation (cfn-lint)
+        run: |
+          pip install cfn-lint
+          cfn-lint cdk.out/*.template.json
+
   validate-comparisons:
     runs-on: ubuntu-latest
     timeout-minutes: 1
